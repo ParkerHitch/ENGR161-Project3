@@ -1,4 +1,5 @@
 import time
+import config
 
 class genericPID:
 
@@ -37,9 +38,9 @@ class genericPID:
         correction = 0.0
         now = time.time_ns()
 
-        # if the loop is running at 50 times per second then deltaT will be 1.
-        # this just helps to keep our kP, kI, & kD values in reasonable ranges.
-        deltaT = (now - self.lastUpdated) / 2e7
+        # if the loop is running at normal speed then deltaT will be 1.
+        # division just helps to keep our kP, kI, & kD values in reasonable ranges.
+        deltaT = (now - self.lastUpdated) / config.NS_PER_TICK
         
         newError = self.setpoint - pos
 
