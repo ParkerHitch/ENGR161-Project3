@@ -62,6 +62,11 @@ class genericPID:
         self.currentError = newError
         self.lastUpdated = now
 
+        if correction > self.max:
+            correction = self.max
+        elif correction < -self.max:
+            correction = -self.max
+
         return correction
     
     def getErr(self):

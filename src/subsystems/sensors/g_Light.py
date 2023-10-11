@@ -1,6 +1,6 @@
 import grovepi
 
-class groveLightSensor:
+class GroveLightSensor:
 
     port = 0
 
@@ -17,4 +17,4 @@ class groveLightSensor:
     # returns brightness as a percentage [0,1.00]
     # higher percentage = brighter environment
     def getBrightness(self):
-        return self.getVal() / 1023.0
+        return self.getRawVal() / 1023.0

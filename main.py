@@ -1,8 +1,10 @@
 from src.subsystems.Drivetrain import TwoWheel
-from src.subsystems.sensors.g_Light import groveLightSensor
+from src.subsystems.sensors.g_Light import GroveLightSensor
+import src.subsystems.LineFollow as LineFollow
 import config
 import brickpi3
 import time
+
 
 print("Hello Project 3!")
 
@@ -14,24 +16,31 @@ state = 0
 
 # declaring our subsystem variables
 drivetrain: TwoWheel
-lightLeft: groveLightSensor
-lightRight: groveLightSensor
+lightLeft: GroveLightSensor
+lightRight: GroveLightSensor
 
 # stuff to do upon starting python
 def robotInit():
-    print("Power on.")
+    global drivetrain, lightLeft, lightRight, BP
     drivetrain = TwoWheel(BP, config.LEFT_MOTOR, config.RIGHT_MOTOR)
-    lightLeft = groveLightSensor(config.G_LIGHT_LEFT)
-    lightRight = groveLightSensor(config.G_LIGHT_RIGHT)
+    print(drivetrain)
+    lightLeft = GroveLightSensor(config.G_LIGHT_LEFT)
+    lightRight = GroveLightSensor(config.G_LIGHT_RIGHT)
+
+    LineFollow.initLineFollow()
 
 def enable():
+    global state
     state = 1
     onEnable()
 def disable():
+    global state
     state = 0
     onDisable()
 def stop():
+    global state, BP
     state = -1
+    BP.reset_all()
 
 # when robot switches to enable
 def onEnable():
@@ -39,12 +48,17 @@ def onEnable():
 
 # 50 times per second while enabled
 def enabledPeriodic():
+    global drivetrain, lightLeft, lightRight
+    print("Go", end="")
+    LineFollow.followBasicLine(drivetrain, lightLeft, lightRight)
     return
 
 # runs once when robot becomes disabled (including when powered on)
 def onDisable():
+    global drivetrain
+    print("Disabled.")
     drivetrain.setPowers(0,0)
-    print("Disabled!")
+    
 
 # runs 50 times per second while disabled
 def disabledPeriodic():
@@ -54,12 +68,16 @@ def disabledPeriodic():
 # enable/disable state logic and calling
 robotInit()
 onDisable()
+enable()
 while state!=-1:
     start = time.perf_counter_ns()
-    if(state == 1):
-        enabledPeriodic()
-    else:
-        disabledPeriodic()
+    try:
+        if(state == 1):
+            enabledPeriodic()
+        else:
+            disabledPeriodic()
+    except:
+        stop()
     # limiting the speed of our loop
     diff = time.perf_counter_ns() - start
     if(diff > config.NS_PER_TICK):

@@ -9,8 +9,8 @@ class TwoWheel:
         self.setREncoder(0)
 
     def setPowers(self, leftPower, rightPower):
-        self.BP.setMotorPower(self.leftP, leftPower)
-        self.BP.setMotorPower(self.rightP, rightPower)
+        self.BP.set_motor_power(self.leftP, int(leftPower * 100))
+        self.BP.set_motor_power(self.rightP, int(rightPower * 100))
     
     def getLEncoder(self):
         return self.BP.get_motor_encoder(self.leftP)
