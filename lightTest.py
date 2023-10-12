@@ -49,8 +49,7 @@ def onEnable():
 # 50 times per second while enabled
 def enabledPeriodic():
     global drivetrain, lightLeft, lightRight
-    print("Go", end="")
-    LineFollow.followBasicLine(drivetrain, lightLeft, lightRight)
+    print(lightRight.getRawVal() - lightLeft.getRawVal())
     return
 
 # runs once when robot becomes disabled (including when powered on)
@@ -76,7 +75,7 @@ while state!=-1:
             enabledPeriodic()
         else:
             disabledPeriodic()
-        # limiting the speed of our loop
+    	# limiting the speed of our loop
         diff = time.perf_counter_ns() - start
         if(diff > config.NS_PER_TICK):
             print(f"LOOP OVERRUN. TOOK {diff}ns")
