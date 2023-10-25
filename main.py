@@ -1,9 +1,11 @@
-from src.subsystems.Drivetrain import TwoWheel
+from src.subsystems.Drivetrain import RearWheelDriveFrontWheelSteer
 from src.subsystems.sensors.g_Light import GroveLightSensor
 import src.subsystems.LineFollow as LineFollow
 import config
 import brickpi3
 import time
+
+from src.subsystems.sensors.g_LineFinder import GroveLineFinder
 
 
 print("Hello Project 3!")
@@ -15,17 +17,16 @@ BP = brickpi3.BrickPi3()
 state = 0
 
 # declaring our subsystem variables
-drivetrain: TwoWheel
-lightLeft: GroveLightSensor
-lightRight: GroveLightSensor
+drivetrain: RearWheelDriveFrontWheelSteer
+lightLeft: GroveLineFinder
+lightRight: GroveLineFinder
 
 # stuff to do upon starting python
 def robotInit():
     global drivetrain, lightLeft, lightRight, BP
-    drivetrain = TwoWheel(BP, config.LEFT_MOTOR, config.RIGHT_MOTOR)
-    print(drivetrain)
-    lightLeft = GroveLightSensor(config.G_LIGHT_LEFT, 70)
-    lightRight = GroveLightSensor(config.G_LIGHT_RIGHT)
+    drivetrain = RearWheelDriveFrontWheelSteer(BP, config.LEFT_MOTOR, config.RIGHT_MOTOR, config.FRONT_MOTOR, 0)
+    lightLeft = GroveLineFinder(config.G_LINE_LEFT)
+    lightRight = GroveLineFinder(config.G_LINE_RIGHT)
 
     LineFollow.initLineFollow()
 
@@ -49,8 +50,7 @@ def onEnable():
 # 50 times per second while enabled
 def enabledPeriodic():
     global drivetrain, lightLeft, lightRight
-    print("Go", end="")
-    LineFollow.followBasicLine(drivetrain, lightLeft, lightRight)
+    LineFollow.followBasicLineDigital(drivetrain, lightLeft, lightRight)
     return
 
 # runs once when robot becomes disabled (including when powered on)
@@ -82,5 +82,5 @@ while state!=-1:
             print(f"LOOP OVERRUN. TOOK {diff}ns")
         else:
             time.sleep((config.NS_PER_TICK - diff) / 1e9)
-    except:
+    except KeyboardInterrupt:
         stop()

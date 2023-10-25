@@ -4,6 +4,7 @@ import src.subsystems.LineFollow as LineFollow
 import config
 import brickpi3
 import time
+import matplotlib.pyplot as plt
 
 
 print("Hello Project 3!")
@@ -19,12 +20,17 @@ drivetrain: TwoWheel
 lightLeft: GroveLightSensor
 lightRight: GroveLightSensor
 
+times = []
+valLeft = []
+valRight = []
+quotient = []
+difference = []
+
 # stuff to do upon starting python
 def robotInit():
     global drivetrain, lightLeft, lightRight, BP
     drivetrain = TwoWheel(BP, config.LEFT_MOTOR, config.RIGHT_MOTOR)
-    print(drivetrain)
-    lightLeft = GroveLightSensor(config.G_LIGHT_LEFT, 70)
+    lightLeft = GroveLightSensor(config.G_LIGHT_LEFT)
     lightRight = GroveLightSensor(config.G_LIGHT_RIGHT)
 
     LineFollow.initLineFollow()
@@ -45,11 +51,27 @@ def stop():
 # when robot switches to enable
 def onEnable():
     print("Enabled!")
+    times.append(0.0)
+    valLeft.append(lightLeft.getRawVal())
+    valRight.append(lightRight.getRawVal())
+    difference.append(0.0)
+    quotient.append(0.0)
 
 # 50 times per second while enabled
 def enabledPeriodic():
-    global drivetrain, lightLeft, lightRight
-    print(lightRight.getRawVal() - lightLeft.getRawVal())
+    global drivetrain, lightLeft, lightRight, time, valLeft, valRight, quotient, difference
+
+    drivetrain.setPowers(0.1,0.1)
+
+    times.append(times[-1]+0.02)
+    valLeft.append(lightLeft.getRawVal())
+    valRight.append(lightRight.getRawVal())
+    difference.append(valLeft[-1]-valRight[-1])
+    quotient.append(  valLeft[-1]/valRight[-1])
+
+    if(len(times) > 50*5):
+        stop()
+
     return
 
 # runs once when robot becomes disabled (including when powered on)
@@ -82,4 +104,16 @@ while state!=-1:
         else:
             time.sleep((config.NS_PER_TICK - diff) / 1e9)
     except:
+        print("ERROR")
         stop()
+
+fig, ax1 = plt.subplots()
+
+ax1.plot(times, valLeft, times, valRight, times, difference)
+
+ax2 = ax1.twinx()
+ax2.plot(times, quotient, color='r')
+
+ax1.legend(['Left Sensor Value','Right Sensor Value', 'diff',])
+ax2.legend(['quotient'])
+plt.show()

@@ -13,12 +13,13 @@ class genericPID:
     currentError = None
     errorDerivative = None
     integralAccumulator = 0
+    maxI = float('inf')
     lastUpdated = 0
 
     deadband = 0.1
     velDeadband = 0.01
 
-    def __init__(self, p, i, d, max=1, deadband=0.1, velDeadband=0.01):
+    def __init__(self, p, i, d, max=1, deadband=0.1, velDeadband=0.01, maxI=float('inf')):
         self.kP = p
         self.kI = i
         self.kD = d
@@ -26,6 +27,7 @@ class genericPID:
 
         self.deadband = deadband
         self.velDeadband = velDeadband
+        self.maxI = maxI
         
         self.lastUpdated = time.time_ns()
 
@@ -56,6 +58,10 @@ class genericPID:
             # i term
             # use a trappazoidal approximation of the error function
             self.integralAccumulator += ((newError + self.currentError)/2) * deltaT
+            if self.integralAccumulator > self.maxI:
+                self.integralAccumulator = self.maxI
+            elif self.integralAccumulator < -self.maxI:
+                self.integralAccumulator = -self.maxI
             correction += self.integralAccumulator * self.kI
 
         # update values for next time
