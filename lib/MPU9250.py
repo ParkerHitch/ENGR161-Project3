@@ -12,6 +12,7 @@
 
 import smbus
 import time
+import lib.Vector3 as Vec3
 
 ## MPU9250 Default I2C slave address
 SLAVE_ADDRESS        = 0x68
@@ -214,7 +215,7 @@ class MPU9250:
         y = round(y*self.ares, 3)
         z = round(z*self.ares, 3)
 
-        return {"x":x, "y":y, "z":z}
+        return Vec3.Vector3(x,y,z)
 
     ## Read gyro
     #  @param [in] self The object pointer.
@@ -232,7 +233,7 @@ class MPU9250:
         y = round(y*self.gres, 3)
         z = round(z*self.gres, 3)
 
-        return {"x":x, "y":y, "z":z}
+        return Vec3.Vector3(x,y,z)
 
     ## Read magneto
     #  @param [in] self The object pointer.
@@ -259,7 +260,7 @@ class MPU9250:
                 y = round(y * self.mres * self.magYcoef, 3)
                 z = round(z * self.mres * self.magZcoef, 3)
 
-        return {"x":x, "y":y, "z":z}
+        return Vec3.Vector3(x,y,z)
 
     ## Read temperature
     #  @param [out] temperature temperature(degrees C)

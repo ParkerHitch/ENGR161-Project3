@@ -39,3 +39,7 @@ K_LINE_I = 1/25
 K_LINE_D = 0
 K_LINE_MAX = 1
 
+# Other values
+MAG_THRESH = 250
+FILTER = [[0.7,1.0],[0.7,1.0],[0.7,1.0],[0.7,1.0],[0.7,1.0],[0.7,1.0],[5,2],[5,2],[5,2]]
+STDEV_COUNT = 3
