@@ -1,5 +1,6 @@
 import time
 import config
+import lib.RMath as rmath
 
 class genericPID:
 
@@ -68,10 +69,7 @@ class genericPID:
         self.currentError = newError
         self.lastUpdated = now
 
-        if correction > self.max:
-            correction = self.max
-        elif correction < -self.max:
-            correction = -self.max
+        correction = rmath.clamp(-self.max, self.max, correction)
 
         return correction
     

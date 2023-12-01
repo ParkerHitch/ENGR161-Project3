@@ -139,3 +139,6 @@ class IMU:
     # + is CCW from behind
     def getRoll(self):
         return math.radians(self.orientation.x)
+    
+    def zeroOrientation(self):
+        self.orientation = Vector3()

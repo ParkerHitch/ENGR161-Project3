@@ -1,5 +1,5 @@
 import math
-from lib.MPU9250 import MPU9250
+import lib.RMath as rmath
 from src.subsystems.Drivetrain import RearWheelDriveFrontWheelSteer
 from src.subsystems.sensors.g_Light import GroveLightSensor
 import src.subsystems.LineFollow as LineFollow
@@ -9,22 +9,19 @@ import time
 
 from src.subsystems.sensors.g_LineFinder import GroveLineFinder
 from src.subsystems.Dump import Dump
-
-class IMU:
-    def __init__(self):
-        self.mpu9250 = MPU9250()
-    
-    def hasMagnet(self):
-        mag = self.mpu9250.readMagnet()
-        return 250 < math.sqrt(math.pow(mag['x'],2) + math.pow(mag['y'],2) + math.pow(mag['z'],2))
+from src.subsystems.sensors.IMU import IMU
 
 print("Hello Project 3!")
 
 BP = brickpi3.BrickPi3()
 
 # 0 = disabled
-# 1 = following a basic line
+# anything else = enabled
 state = 0
+magnetsHit = 0
+timeLastHit = 0
+targetSite = 1
+startAng = 0
 
 # declaring our subsystem variables
 drivetrain: RearWheelDriveFrontWheelSteer
@@ -41,6 +38,7 @@ def robotInit():
     lightLeft = GroveLineFinder(config.G_LINE_LEFT)
     lightRight = GroveLineFinder(config.G_LINE_RIGHT)
     imu = IMU()
+    imu.initialize()
     LineFollow.initLineFollow()
 
 def enable():
@@ -58,48 +56,99 @@ def stop():
 
 # when robot switches to enable
 def onEnable():
+    global imu, magnetsHit, timeLastHit
+    imu.zeroOrientation()
+    magnetsHit = 0
+    timeLastHit = 0
     print("Enabled!")
 
-startPos = 0
+dumpStartPos = 0
+dumpStartTime = 0
+brightnessSum = 0
+
+def startDump():
+    global dumpStartPos, state, drivetrain
+    dumpStartPos = drivetrain.getREncoder()
+    drivetrain.setFrontAngle(0)
+    state = 4
 
 # 50 times per second while enabled
 def enabledPeriodic():
-    global drivetrain, lightLeft, lightRight, imu, startPos, state, dump
+    global drivetrain, lightLeft, lightRight, imu, dumpStartPos, state, dump, magnetsHit, timeLastHit, targetSite, startAng, dumpStartTime, brightnessSum
+    imu.update()
+
+    if imu.hasMagnet():
+        if time.time() > timeLastHit + config.MAGNET_COOLDOWN:
+            magnetsHit += 1
+        timeLastHit = time.time()
+
+    # normal driving and wating until we hit the proper number of magnets
     if state==1:
         LineFollow.followBasicLineDigital(drivetrain, lightLeft, lightRight)
         dump.idle()
+
+        if magnetsHit == targetSite:
+            if targetSite <= 2:
+                # Exit onto branch
+                state = 2
+                startAng = imu.getYaw()
+            else:
+                # Start dumping
+                startDump()
+    #turn onto branch
     elif state==2:
-        drivetrain.setPowers(0.6,0.6)
-        drivetrain.setFrontAngle(0)
+        LineFollow.followBranch(drivetrain, lightLeft, lightRight)
         dump.idle()
+        # clockwise
+        if imu.getYaw() < startAng - config.PATH_ANG:
+            # follow normally until we hit a magnet
+            state = 3
+    #drive normally until we hit the dropoff magnet
     elif state==3:
-        drivetrain.setPowers(0.2,0.2)
+        LineFollow.followBasicLineDigital(drivetrain, lightLeft, lightRight)
+        dump.idle()
+        if magnetsHit == targetSite+1:
+            # dumping time
+            startDump()
+    # Drive forward until we are in position to dump
+    elif state==4:
+        drivetrain.setSpeeds(config.BASE_SPEED_DPS, config.BASE_SPEED_DPS)
         drivetrain.setFrontAngle(0)
         dump.idle()
-        if imu.hasMagnet():
-            startPos = drivetrain.getREncoder()
-            state = 4
-    if state == 4:
-        print(startPos)
-        print(startPos - 360 * (12 /(math.pi * config.WHEEL_RADIUS * 2)))
-        print(drivetrain.getREncoder())
-        drivetrain.setPowers(0.2,0.2)
-        drivetrain.setFrontAngle(0)
-        dump.idle()
-        if drivetrain.getREncoder() < startPos - 360 * (12 /(math.pi * config.WHEEL_RADIUS * 2)):
+
+        # if we have moved DUMP_DRIVE_DIST inches since when we started dumping...
+        if drivetrain.getREncoder() < dumpStartPos - 360 * (config.DUMP_DRIVE_DIST /(math.pi * config.WHEEL_RADIUS * 2)):
             state = 5
-            startPos = time.time()
-    if state == 5:
-        dump.dump()
+            dumpStartTime = time.time()
+    # stop and dump for DUMP_TIME seconds
+    elif state==5:
         drivetrain.setPowers(0,0)
         drivetrain.setFrontAngle(0)
-        if(time.time() > startPos+2):
-            state = 2
+        dump.dump()
+        if time.time() > dumpStartTime + config.DUMP_TIME:
+            dumpStartPos = drivetrain.getREncoder()
+            state = 6
+    # at this point we have dumped
+    # we drive but leave the dump down for a bit just to make sure it falls off
+    elif state==6:
+        LineFollow.followBasicLineDigital(drivetrain, lightLeft, lightRight)
+        # leave the dump down for a bit just to make sure it falls off
+        dump.dump()
+        if time.time() > dumpStartTime + config.DUMP_TIME + 1:
+            state = 7
+    # return the dump to idle and then drive normal until we see white for
+    # a decent amount of time. Then disable.
+    elif state==7:
+        LineFollow.followBasicLineDigital(drivetrain, lightLeft, lightRight)
+        dump.idle()
+        # adds 0.25 if both white, subtracts 0.75 if both black, subtracts 0.25 if different
+        brightnessSum += (lightLeft.readandAverage() + lightLeft.readandAverage())/2 - 0.75
+        brightnessSum = rmath.minClamp(0, brightnessSum)
 
+        # if seeing white for 3/4 of second
+        if brightnessSum >= 0.25 * (0.75 * 50):
+            disable()
         
-
-
-
     return
 
 # runs once when robot becomes disabled (including when powered on)

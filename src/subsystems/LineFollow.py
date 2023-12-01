@@ -40,3 +40,17 @@ def followBasicLineDigital(dt: RearWheelDriveFrontWheelSteer, lsl: GroveLineFind
 
     dt.drive(correction * dt.maxAngWheel, config.BASE_SPEED_DPS)
 
+def followBranch(dt: RearWheelDriveFrontWheelSteer, lsl: GroveLineFinder, lsr: GroveLineFinder):
+    global followPID
+
+    # +1 if left is white, right is black, -1 if left is black, right is white
+    # left = lsl.readandAverage()
+    right = lsr.readandAverage()
+    diff = 0.5 - right
+    correction = followPID.updateLoop(diff)
+    # <0 if too far left, >0 if too far right
+    #print(diff)
+    #print(correction)
+
+    dt.drive(correction * dt.maxAngWheel, config.BASE_SPEED_DPS)
+

@@ -1,3 +1,4 @@
+from math import pi
 # corosponds to 50 ticks per second
 NS_PER_TICK = 2e7
 
@@ -39,7 +40,13 @@ K_LINE_I = 1/25
 K_LINE_D = 0
 K_LINE_MAX = 1
 
-# Other values
+MAGNET_COOLDOWN = 10
+DUMP_DRIVE_DIST = 12
+DUMP_TIME = 2
+
+PATH_ANG = pi/4
+
+# IMU
 MAG_THRESH = 250
 FILTER = [[0.7,1.0],[0.7,1.0],[0.7,1.0],[0.7,1.0],[0.7,1.0],[0.7,1.0],[5,2],[5,2],[5,2]]
 STDEV_COUNT = 3
