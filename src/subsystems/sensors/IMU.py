@@ -90,7 +90,8 @@ class IMU:
     def update(self):
         accel = self.mpu9250.readAccel()
         gyro = self.mpu9250.readGyro()
-        mag = self.mpu9250.readMagnet()
+        self.rawMag = self.mpu9250.readMagnet()
+        mag = Vector3(self.rawMag.x, self.rawMag.y, self.rawMag.z)
         temp=[accel.x,accel.y,accel.z,gyro.x,gyro.y,gyro.z,mag.x,mag.y,mag.z]
         for x in range(9):
             #Setting up initial variables
@@ -127,18 +128,19 @@ class IMU:
 
 
     def hasMagnet(self):
-        mag = self.mpu9250.readMagnet()
-        return math.sqrt(math.pow(mag['x'],2) + math.pow(mag['y'],2) + math.pow(mag['z'],2)) > config.MAG_THRESH
+        mag = self.rawMag
+        #print(mag.mag())
+        return (mag.mag() > config.MAG_THRESH and mag.x/mag.mag() > config.MAG_ANG)
     
     # + is CCW
     def getYaw(self):
-        return math.radians(self.orientation.z)
+        return math.radians(self.orientation.y)
     # + is nose up
     def getPitch(self):
-        return math.radians(self.orientation.y)
+        return math.radians(self.orientation.x)
     # + is CCW from behind
     def getRoll(self):
-        return math.radians(self.orientation.x)
+        return math.radians(self.orientation.z)
     
     def zeroOrientation(self):
         self.orientation = Vector3()

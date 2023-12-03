@@ -2,6 +2,7 @@ from src.subsystems.Drivetrain import *
 from src.subsystems.sensors.g_Light import GroveLightSensor
 from src.subsystems.sensors.g_LineFinder import GroveLineFinder
 from src.util.PID import genericPID
+import lib.RMath as rmath
 import config
 
 followPID: genericPID
@@ -32,7 +33,7 @@ def followBasicLineDigital(dt: RearWheelDriveFrontWheelSteer, lsl: GroveLineFind
     left = lsl.readandAverage()
     right = lsr.readandAverage()
     print(left, right)
-    diff = left - right
+    diff = rmath.minClamp(-1, left  - right)
     correction = followPID.updateLoop(diff)
     # <0 if too far left, >0 if too far right
     #print(diff)
@@ -40,7 +41,7 @@ def followBasicLineDigital(dt: RearWheelDriveFrontWheelSteer, lsl: GroveLineFind
 
     dt.drive(correction * dt.maxAngWheel, config.BASE_SPEED_DPS)
 
-def followBranch(dt: RearWheelDriveFrontWheelSteer, lsl: GroveLineFinder, lsr: GroveLineFinder):
+def keepRight(dt: RearWheelDriveFrontWheelSteer, lsl: GroveLineFinder, lsr: GroveLineFinder):
     global followPID
 
     # +1 if left is white, right is black, -1 if left is black, right is white
@@ -54,3 +55,17 @@ def followBranch(dt: RearWheelDriveFrontWheelSteer, lsl: GroveLineFinder, lsr: G
 
     dt.drive(correction * dt.maxAngWheel, config.BASE_SPEED_DPS)
 
+
+def keepLeft(dt: RearWheelDriveFrontWheelSteer, lsl: GroveLineFinder, lsr: GroveLineFinder):
+    global followPID
+
+    # +1 if left is white, right is black, -1 if left is black, right is white
+    left = lsl.readandAverage()
+    #right = lsr.readandAverage()
+    diff = left - 0.5
+    correction = followPID.updateLoop(diff)
+    # <0 if too far left, >0 if too far right
+    #print(diff)
+    #print(correction)
+
+    dt.drive(correction * dt.maxAngWheel, config.BASE_SPEED_DPS)

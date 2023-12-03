@@ -1,5 +1,3 @@
-
-
 class Dump:
     def __init__(self, BP, port):
         self.BP = BP
@@ -16,4 +14,7 @@ class Dump:
         self.BP.set_motor_position(self.dumpPort, 5)
     
     def dump(self):
-        self.BP.set_motor_position(self.dumpPort, -30)
+        if(self.BP.get_motor_encoder(self.dumpPort) > -45):
+            self.BP.set_motor_power(self.dumpPort, -0.2)
+        else:
+            self.BP.set_motor_position(self.dumpPort, -45)
