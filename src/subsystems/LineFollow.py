@@ -26,7 +26,7 @@ def followBasicLineAlalog(dt: TwoWheel, lsl: GroveLightSensor, lsr: GroveLightSe
 
 #    dt.setPowers(powerL, powerR)
 
-def followBasicLineDigital(dt: RearWheelDriveFrontWheelSteer, lsl: GroveLineFinder, lsr: GroveLineFinder):
+def followBasicLineDigital(dt: RearWheelDriveFrontWheelSteer, lsl: GroveLineFinder, lsr: GroveLineFinder, speedMult=1):
     global followPID
 
     # +1 if left is white, right is black, -1 if left is black, right is white
@@ -39,7 +39,7 @@ def followBasicLineDigital(dt: RearWheelDriveFrontWheelSteer, lsl: GroveLineFind
     #print(diff)
     #print(correction)
 
-    dt.drive(correction * dt.maxAngWheel, config.BASE_SPEED_DPS)
+    dt.drive(correction * dt.maxAngWheel, config.BASE_SPEED_DPS * speedMult)
 
 def keepRight(dt: RearWheelDriveFrontWheelSteer, lsl: GroveLineFinder, lsr: GroveLineFinder):
     global followPID

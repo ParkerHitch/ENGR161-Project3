@@ -59,15 +59,19 @@ def stop():
 
 # when robot switches to enable
 def onEnable():
-    global imu, magnetsHit, timeLastHit
+    global imu, magnetsHit, timeLastHit,brightnessSum, distCnt
     imu.zeroOrientation()
     magnetsHit = 0
     timeLastHit = 0
+    brightnessSum = 0
+    distCnt = 0
     print("Enabled!")
 
 dumpStartPos = 0
 dumpStartTime = 0
 brightnessSum = 0
+distCnt = 0
+targetSpeed = 0
 
 def startDump():
     global dumpStartPos, state, drivetrain
@@ -77,7 +81,7 @@ def startDump():
 
 # 50 times per second while enabled
 def enabledPeriodic():
-    global drivetrain, lightLeft, lightRight, imu, dumpStartPos, state, dump, magnetsHit, timeLastHit, targetSite, startAng, dumpStartTime, brightnessSum, distSense
+    global drivetrain, lightLeft, lightRight, imu, dumpStartPos, state, dump, magnetsHit, timeLastHit, targetSite, startAng, dumpStartTime, brightnessSum, distSense, distCnt, targetSpeedMult
     imu.update()
 
     if imu.hasMagnet():
@@ -87,15 +91,25 @@ def enabledPeriodic():
         timeLastHit = time.time()
 
     if distSense.hasWall():
-        return
+        distCnt += 1
+        if distCnt > 15:
+            drivetrain.setPowers(0, 0)
+            return
+    elif distCnt > 0:
+        distCnt -= 1
 
-    # normal driving and wating until we hit the proper number of magnets
-    if state==1:
+    # normal driving and wating until we go over ramp
+    if state==100:
+        dump.idle()
+        LineFollow.followBasicLineDigital(drivetrain, lightLeft, lightRight, rmath.minClamp(1, 10 * imu.getPitch()))
+        if imu.getPitch() < config.DOWNHILL_ANG:
+            state = 1
+    elif state==1:
         print("Magnets: ", magnetsHit)
         dump.idle()
 
         if magnetsHit == 0:
-            LineFollow.followBasicLineDigital(drivetrain, lightLeft, lightRight)
+            LineFollow.keepLeft(drivetrain, lightLeft, lightRight)
         elif magnetsHit == targetSite:
             if targetSite <= 2:
                 # Exit onto branch
@@ -165,7 +179,10 @@ def enabledPeriodic():
     elif state == 8:
         LineFollow.keepLeft(drivetrain, lightLeft, lightRight)
         dump.idle()
-        
+    elif state == 200:
+        LineFollow.followBasicLineDigital(drivetrain, lightLeft, lightRight, targetSpeedMult)
+
+
     return
 
 # runs once when robot becomes disabled (including when powered on)
@@ -179,12 +196,18 @@ def onDisable():
 
 # runs 50 times per second while disabled
 def disabledPeriodic():
-    global state, targetSite
+    global state, targetSite, targetSpeedMult
     state =int( input("Enter new state: "))
     if state == 4:
         startDump()
+    elif state == 200:
+        targetCmPS = int(input("Enter target speed (cm/s): ")) * config.SPEED_TRANSFORM
+        targetRadPS = targetCmPS / (config.WHEEL_RADIUS_CM)
+        targetDPS = math.degrees(targetRadPS)
+        targetSpeedMult = targetDPS / config.BASE_SPEED_DPS
     else:
         targetSite = int(input("Enter target site: "))
+    onEnable()
     return
 
 

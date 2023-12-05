@@ -1,4 +1,4 @@
-from math import pi
+from math import pi, radians
 # corosponds to 50 ticks per second
 NS_PER_TICK = 2e7
 
@@ -6,6 +6,7 @@ NS_PER_TICK = 2e7
 BACK_SEPARATION = 7.5 # inches, distance between the centers of the back wheels
 Y_SEPARATION = 9.75 # inches, distance between center of back to center of front wheel
 WHEEL_RADIUS = 1.5
+WHEEL_RADIUS_CM = 3.4
 
 # brickpi ports (I really don't want to create 2 BrickPi3 instances)
 BP_PORT_1 = 0x01
@@ -43,13 +44,16 @@ K_LINE_MAX = 1
 
 R_MIN = 0.6
 
-DIST_THRESH = 30
+DIST_THRESH = 20
+
+SPEED_TRANSFORM = 30/27
 
 MAGNET_COOLDOWN = 1
 DUMP_DRIVE_DIST = 20
 DUMP_TIME = 2
 
 PATH_ANG = pi/8
+DOWNHILL_ANG = -radians(10)
 
 # IMU
 MAG_THRESH = 300

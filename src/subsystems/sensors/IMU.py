@@ -11,6 +11,7 @@ class IMU:
         self.accel = Vector3(0,0,0)
         self.gyro = Vector3(0,0,0)
         self.orientation = Vector3(0,0,0)
+        self.velocity = Vector3()
         self.mag = Vector3(0,0,0)
         self.biases = [0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0]
         self.state = [[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0],[0,0,0,0,0,0,0,0,0]]
@@ -126,6 +127,11 @@ class IMU:
         self.orientation.y += self.gyro.y * deltaT
         self.orientation.z += self.gyro.z * deltaT
 
+        # BROKEN. NO IDEA WHY
+        # self.velocity.x += self.accel.x * deltaT
+        # self.velocity.y += self.accel.y * deltaT
+        # self.velocity.z += self.accel.z * deltaT
+
 
     def hasMagnet(self):
         mag = self.rawMag
@@ -144,3 +150,6 @@ class IMU:
     
     def zeroOrientation(self):
         self.orientation = Vector3()
+    
+    def zeroVel(self):
+        self.velocity = Vector3()
